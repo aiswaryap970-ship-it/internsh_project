@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aishwarya Portfolio</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+    scroll-behavior:smooth;
+}
+
+body{
+    background:#03152b;
+    color:white;
+}
+
+nav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 8%;
+}
+
+.logo{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.logo span{
+    color:#29b6ff;
+}
+
+nav ul{
+    display:flex;
+    list-style:none;
+    gap:20px;
+}
+
+nav a{
+    text-decoration:none;
+    color:white;
+}
+
+.hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:60px 8%;
+    flex-wrap:wrap;
+}
+
+.image-box{
+    width:350px;
+    height:350px;
+    border-radius:50%;
+    background:#0a5ea8;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    box-shadow:0 0 40px #29b6ff;
+}
+
+.image-box img{
+    width:300px;
+    height:300px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.content{
+    max-width:550px;
+}
+
+.content h3{
+    color:#cccccc;
+    margin-bottom:10px;
+}
+
+.content h1{
+    font-size:55px;
+    margin-bottom:10px;
+}
+
+.content h2{
+    color:#29b6ff;
+    margin-bottom:20px;
+}
+
+.content p{
+    line-height:1.7;
+    margin-bottom:25px;
+}
+
+.btn{
+    display:inline-block;
+    padding:12px 25px;
+    border-radius:5px;
+    text-decoration:none;
+    font-weight:bold;
+    margin-right:10px;
+}
+
+.btn1{
+    background:#29b6ff;
+    color:black;
+}
+
+.btn2{
+    border:1px solid white;
+    color:white;
+}
+
+.section{
+    padding:50px 8%;
+}
+
+.section h2{
+    color:#29b6ff;
+    margin-bottom:20px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#08213d;
+    padding:25px;
+    border-radius:12px;
+}
+
+.card h3{
+    margin-bottom:10px;
+}
+
+footer{
+    text-align:center;
+    padding:30px;
+    color:#cccccc;
+}
+
+</style>
+</head>
+
+<body>
+
+<nav>
+<div class="logo">Port<span>folio</span></div>
+
+<ul>
+<li><a href="#">Home</a></li>
+<li><a href="#about">About</a></li>
+<li><a href="#education">Education</a></li>
+<li><a href="#skills">Skills</a></li>
+<li><a href="#projects">Projects</a></li>
+<li><a href="#certifications">Certifications</a></li>
+<li><a href="#contact">Contact</a></li>
+</ul>
+</nav>
+
+<section class="hero">
+
+<div class="image-box">
+<img src="https://via.placeholder.com/300" alt="Profile">
+</div>
+
+<div class="content">
+
+<h3>Hi, I'm</h3>
+
+<h1>Aishwarya</h1>
+
+<h2>B.Tech CSE Student</h2>
+
+<p>
+Building Skills Through Projects and Learning
+</p>
+
+<a href="#projects" class="btn btn1">View Projects</a>
+
+<a href="#skills" class="btn btn2">My Skills</a>
+
+</div>
+
+</section>
+
+<section class="section" id="about">
+
+<h2>About Me</h2>
+
+<div class="card">
+<p>
+I am Aishwarya, a second-year B.Tech Computer Science Engineering student. I am continuously improving my technical knowledge through academic projects, coursework, workshops, and practical learning experiences.
+</p>
+</div>
+
+</section>
+
+<section class="section" id="education">
+
+<h2>Education</h2>
+
+<div class="card">
+<h3>B.Tech Computer Science Engineering</h3>
+<p>Currently pursuing Second Year.</p>
+</div>
+
+</section>
+
+<section class="section" id="skills">
+
+<h2>Skills</h2>
+
+<div class="cards">
+
+<div class="card">
+<h3>C Programming</h3>
+</div>
+
+<div class="card">
+<h3>Java Programming</h3>
+</div>
+
+<div class="card">
+<h3>Python</h3>
+</div>
+
+</div>
+
+</section>
+
+<section class="section" id="projects">
+
+<h2>Projects</h2>
+
+<div class="cards">
+
+<div class="card">
+<h3>Smart Medicine Reminder</h3>
+<p>
+Academic project developed as part of the curriculum to assist users in managing medication schedules and reminders.
+</p>
+</div>
+
+<div class="card">
+<h3>Memory Management Simulation</h3>
+<p>
+Academic project focused on paging and MMU address translation concepts.
+</p>
+</div>
+
+</div>
+
+</section>
+
+<section class="section" id="certifications">
+
+<h2>Certifications</h2>
+
+<div class="cards">
+
+<div class="card">
+<h3>NPTEL Certification in C Programming</h3>
+</div>
+
+<div class="card">
+<h3>Seminar Participation Certificates</h3>
+</div>
+
+<div class="card">
+<h3>Workshop Participation Certificates</h3>
+</div>
+
+</div>
+
+</section>
+
+<section class="section" id="contact">
+
+<h2>Contact</h2>
+
+<div class="card">
+<p>Email: aiswaryap970@gmail.com</p>
+<p>GitHub:https://github.com/aiswaryap970-ship-it/internsh_project.git </p>
+</div>
+
+</section>
+
+<footer>
+© 2026 Aishwarya Portfolio
+</footer>
+
+</body>
+</html>
