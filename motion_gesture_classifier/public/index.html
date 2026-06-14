@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Impulse · Motion Gesture Classifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#06070d;
+    --bg-1:#0b0d18;
+    --panel:rgba(20,24,40,0.55);
+    --panel-border:rgba(255,255,255,0.08);
+    --text-0:#eef0ff;
+    --text-1:#9aa1c4;
+    --text-2:#5e6489;
+    --accent-x:#5ee0ff;
+    --accent-y:#b18bff;
+    --accent-z:#ff8fd6;
+    --grad-1:#5ee0ff;
+    --grad-2:#7c5cff;
+    --grad-3:#ff5cb1;
+    --ok:#5ef0b0;
+    --warn:#ffd166;
+    --danger:#ff5c7a;
+    --radius:18px;
+    --radius-sm:12px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 600px at 85% -10%, rgba(124,92,255,0.25), transparent 60%),
+      radial-gradient(700px 500px at 5% 100%, rgba(94,224,255,0.12), transparent 60%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1));
+    color:var(--text-0);
+    font-family:'Outfit', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:24px;
+  }
+
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  /* layout */
+  .shell{
+    max-width:1280px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+    padding:4px 6px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .brand .mark{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg, var(--grad-1), var(--grad-2) 55%, var(--grad-3));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 24px rgba(124,92,255,0.45), inset 0 0 12px rgba(255,255,255,0.25);
+    flex-shrink:0;
+  }
+  .brand .mark svg{width:22px;height:22px;}
+  .brand h1{
+    font-size:1.05rem;
+    font-weight:700;
+    letter-spacing:0.01em;
+    margin:0;
+    line-height:1.15;
+  }
+  .brand .sub{
+    font-size:0.78rem;
+    color:var(--text-1);
+    font-weight:400;
+    margin-top:2px;
+  }
+
+  .badges{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .badge{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 13px;
+    border-radius:999px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(14px);
+    font-size:0.74rem;
+    color:var(--text-1);
+    font-weight:500;
+    letter-spacing:0.02em;
+    transition:border-color .35s, color .35s, box-shadow .35s;
+  }
+  .badge .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--text-2);
+    flex-shrink:0;
+    transition:background .35s, box-shadow .35s;
+  }
+  .badge.active{
+    color:var(--text-0);
+    border-color:rgba(94,224,255,0.4);
+    box-shadow:0 0 18px rgba(94,224,255,0.12);
+  }
+  .badge.active .dot{
+    background:var(--accent-x);
+    box-shadow:0 0 8px var(--accent-x);
+  }
+
+  /* main grid */
+  .grid{
+    display:grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap:20px;
+  }
+  @media (max-width: 940px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:var(--radius);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    padding:22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .panel::before{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:inherit;
+    padding:1px;
+    background:linear-gradient(135deg, rgba(94,224,255,0.35), rgba(124,92,255,0.12) 40%, rgba(255,92,177,0.0) 75%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+    pointer-events:none;
+    opacity:0.7;
+  }
+
+  .panel-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:14px;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .panel-head h2{
+    font-size:0.95rem;
+    font-weight:600;
+    margin:0;
+    letter-spacing:0.01em;
+  }
+  .panel-head .hint{
+    font-size:0.72rem;
+    color:var(--text-2);
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  /* start button + project info */
+  .control-row{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+    justify-content:space-between;
+  }
+
+  .start-btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:700;
+    font-size:0.95rem;
+    letter-spacing:0.02em;
+    color:#04060d;
+    padding:15px 30px;
+    border-radius:14px;
+    background:linear-gradient(135deg, var(--grad-1), var(--grad-2) 60%, var(--grad-3));
+    box-shadow:0 8px 30px rgba(124,92,255,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+    transition:transform .15s ease, box-shadow .25s ease, opacity .25s;
+    display:flex; align-items:center; gap:10px;
+  }
+  .start-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 36px rgba(124,92,255,0.5), inset 0 1px 0 rgba(255,255,255,0.45); }
+  .start-btn:active{ transform:translateY(0px) scale(0.99); }
+  .start-btn:disabled{
+    opacity:0.55; cursor:default; transform:none;
+    box-shadow:0 0 0 rgba(0,0,0,0);
+    background:linear-gradient(135deg, #3a3f57, #2b2e42);
+    color:var(--text-1);
+  }
+  .start-btn .pulse{
+    width:10px;height:10px;border-radius:50%;
+    background:#04060d;
+    animation:none;
+  }
+  .start-btn.live .pulse{
+    background:#04ffa0;
+    box-shadow:0 0 10px #04ffa0;
+    animation:pulseDot 1.4s ease-in-out infinite;
+  }
+  @keyframes pulseDot{
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:0.35; transform:scale(0.7); }
+  }
+
+  .project-tag{
+    font-size:0.8rem;
+    color:var(--text-1);
+    text-align:right;
+  }
+  .project-tag b{ color:var(--text-0); font-weight:600; }
+
+  /* canvas */
+  .canvas-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio: 16 / 7;
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+    background:
+      radial-gradient(120% 100% at 50% 0%, rgba(124,92,255,0.10), transparent 60%),
+      #060812;
+    border:1px solid rgba(255,255,255,0.05);
+  }
+  #waveform{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .axis-legend{
+    position:absolute;
+    top:10px; left:14px;
+    display:flex;
+    gap:14px;
+    font-size:0.72rem;
+    font-family:'JetBrains Mono', monospace;
+    pointer-events:none;
+  }
+  .axis-legend span{ display:flex; align-items:center; gap:6px; color:var(--text-1); }
+  .axis-legend i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .axis-legend .x i{ background:var(--accent-x); box-shadow:0 0 8px var(--accent-x);}
+  .axis-legend .y i{ background:var(--accent-y); box-shadow:0 0 8px var(--accent-y);}
+  .axis-legend .z i{ background:var(--accent-z); box-shadow:0 0 8px var(--accent-z);}
+
+  .readout-row{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .readout{
+    flex:1 1 90px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:10px 14px;
+    text-align:center;
+  }
+  .readout .lab{
+    font-size:0.66rem;
+    color:var(--text-2);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .readout .val{
+    font-family:'JetBrains Mono', monospace;
+    font-size:1.05rem;
+    font-weight:500;
+  }
+  .readout.x .val{ color:var(--accent-x); }
+  .readout.y .val{ color:var(--accent-y); }
+  .readout.z .val{ color:var(--accent-z); }
+
+  /* prediction panel */
+  .predict-banner{
+    border-radius:var(--radius-sm);
+    padding:22px;
+    text-align:center;
+    margin-bottom:18px;
+    background:linear-gradient(160deg, rgba(94,224,255,0.07), rgba(124,92,255,0.05));
+    border:1px solid var(--panel-border);
+    transition:border-color .4s, box-shadow .4s, background .4s;
+    position:relative;
+  }
+  .predict-banner .lab{
+    font-size:0.7rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--text-2);
+    margin-bottom:8px;
+  }
+  .predict-banner .gesture{
+    font-size:2.1rem;
+    font-weight:800;
+    letter-spacing:0.01em;
+    background:linear-gradient(135deg, var(--grad-1), var(--grad-3));
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    transition: filter .4s;
+  }
+  .predict-banner .conf{
+    margin-top:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.85rem;
+    color:var(--text-1);
+  }
+  .predict-banner.live{
+    box-shadow:0 0 40px rgba(94,224,255,0.18), inset 0 0 60px rgba(124,92,255,0.06);
+    border-color:rgba(94,224,255,0.35);
+  }
+
+  .prob-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .prob-row{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .prob-row .meta{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.82rem;
+    font-weight:500;
+  }
+  .prob-row .meta .pct{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--text-1);
+    font-weight:400;
+  }
+  .prob-track{
+    height:10px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.05);
+    overflow:hidden;
+    position:relative;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+  .prob-fill{
+    height:100%;
+    width:0%;
+    border-radius:999px;
+    transition:width .18s ease-out, box-shadow .25s;
+    background:linear-gradient(90deg, var(--grad-1), var(--grad-2));
+  }
+  .prob-row[data-cls="circle"] .prob-fill{ background:linear-gradient(90deg, #5ee0ff, #7c5cff); }
+  .prob-row[data-cls="wave"] .prob-fill{ background:linear-gradient(90deg, #b18bff, #ff5cb1); }
+  .prob-row[data-cls="idle"] .prob-fill{ background:linear-gradient(90deg, #5ef0b0, #5ee0ff); }
+  .prob-row.top .prob-fill{
+    box-shadow:0 0 16px currentColor;
+  }
+  .prob-row.top .prob-track{ border-color:rgba(255,255,255,0.18); }
+
+  /* console */
+  .console{
+    margin-top:18px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    color:var(--text-2);
+    line-height:1.7;
+    max-height:96px;
+    overflow-y:auto;
+    border-top:1px solid var(--panel-border);
+    padding-top:10px;
+  }
+  .console div{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .console .err{ color:var(--danger); }
+  .console .ok{ color:var(--ok); }
+
+  footer{
+    text-align:center;
+    color:var(--text-2);
+    font-size:0.74rem;
+    padding:6px;
+  }
+
+  @media (max-width: 600px){
+    body{padding:14px;}
+    .panel{padding:16px;}
+    .predict-banner .gesture{ font-size:1.6rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .start-btn.live .pulse{ animation:none; }
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12h4l2-7 4 14 2-7h6" stroke="#04060d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1 id="project-title">Motion Gesture Classifier</h1>
+        <div class="sub" id="project-sub">Loading model…</div>
+      </div>
+    </div>
+
+    <div class="badges">
+      <div class="badge" id="badge-generic"><span class="dot"></span>Generic Sensor</div>
+      <div class="badge" id="badge-hwmotion"><span class="dot"></span>HW Motion</div>
+      <div class="badge" id="badge-swfilter"><span class="dot"></span>SW Filter</div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- LEFT COLUMN -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <section class="panel">
+        <div class="control-row">
+          <button class="start-btn" id="start-btn"><span class="pulse"></span>Start Sensors</button>
+          <div class="project-tag" id="project-tag">—</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Accelerometer Waveform</h2>
+          <span class="hint" id="rate-readout">62.5 Hz · buffer —</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="waveform"></canvas>
+          <div class="axis-legend">
+            <span class="x"><i></i>X</span>
+            <span class="y"><i></i>Y</span>
+            <span class="z"><i></i>Z</span>
+          </div>
+        </div>
+        <div class="readout-row">
+          <div class="readout x"><div class="lab">X axis</div><div class="val" id="val-x">0.00</div></div>
+          <div class="readout y"><div class="lab">Y axis</div><div class="val" id="val-y">0.00</div></div>
+          <div class="readout z"><div class="lab">Z axis</div><div class="val" id="val-z">0.00</div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <section class="panel">
+        <div class="predict-banner" id="predict-banner">
+          <div class="lab">Predicted Gesture</div>
+          <div class="gesture" id="predict-gesture">—</div>
+          <div class="conf" id="predict-conf">awaiting inference…</div>
+        </div>
+
+        <div class="panel-head" style="margin-bottom:12px;">
+          <h2>Class Probabilities</h2>
+          <span class="hint" id="inf-time">— ms</span>
+        </div>
+
+        <div class="prob-list" id="prob-list">
+          <div class="prob-row" data-cls="circle">
+            <div class="meta"><span>Circle</span><span class="pct">0%</span></div>
+            <div class="prob-track"><div class="prob-fill"></div></div>
+          </div>
+          <div class="prob-row" data-cls="wave">
+            <div class="meta"><span>Wave</span><span class="pct">0%</span></div>
+            <div class="prob-track"><div class="prob-fill"></div></div>
+          </div>
+          <div class="prob-row" data-cls="idle">
+            <div class="meta"><span>Idle</span><span class="pct">0%</span></div>
+            <div class="prob-track"><div class="prob-fill"></div></div>
+          </div>
+        </div>
+
+        <div class="console" id="console"></div>
+      </section>
+    </div>
+
+  </div>
+
+  <footer>Edge Impulse WASM inference · runs entirely on-device, no data leaves the browser</footer>
+</div>
+
+<!-- Load Edge Impulse WASM module locally -->
+<script src="edge-impulse-standalone.js"></script>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // Config
+  // ---------------------------------------------------------------------
+  const SAMPLE_INTERVAL_MS = 16;       // ~62.5 Hz
+  const HZ = 1000 / SAMPLE_INTERVAL_MS;
+  const HP_FILTER_ALPHA = 0.8;         // high-pass filter coefficient for gravity removal
+  const CANVAS_HISTORY_SEC = 4;        // seconds of waveform shown
+
+  const CLASS_KEY_MAP = { circle: 'circle', wave: 'wave', idle: 'idle' };
+
+  // ---------------------------------------------------------------------
+  // DOM refs
+  // ---------------------------------------------------------------------
+  const $ = (id) => document.getElementById(id);
+  const startBtn   = $('start-btn');
+  const projTitle  = $('project-title');
+  const projSub    = $('project-sub');
+  const projTag    = $('project-tag');
+  const badgeGeneric = $('badge-generic');
+  const badgeHw      = $('badge-hwmotion');
+  const badgeSw      = $('badge-swfilter');
+  const valX = $('val-x'), valY = $('val-y'), valZ = $('val-z');
+  const rateReadout = $('rate-readout');
+  const predictBanner = $('predict-banner');
+  const predictGesture = $('predict-gesture');
+  const predictConf = $('predict-conf');
+  const infTime = $('inf-time');
+  const consoleEl = $('console');
+  const canvas = $('waveform');
+  const ctx = canvas.getContext('2d');
+
+  function log(msg, cls){
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    consoleEl.prepend(line);
+    while (consoleEl.children.length > 30) consoleEl.removeChild(consoleEl.lastChild);
+  }
+
+  function setActiveBadge(badge){
+    [badgeGeneric, badgeHw, badgeSw].forEach(b => b.classList.remove('active'));
+    if (badge) badge.classList.add('active');
+  }
+
+  // ---------------------------------------------------------------------
+  // Classifier (Edge Impulse WASM module)
+  // ---------------------------------------------------------------------
+  let classifierReady = false;
+  let classifier = null;
+  let windowSize = 0;     // total feature count expected by the model (= samples * axes)
+  let axisCount = 3;
+
+  function initClassifier(){
+    return new Promise((resolve, reject) => {
+      Module.onRuntimeInitialized = () => {
+        try {
+          const ret = Module.init();
+          if (typeof ret === 'number' && ret !== 0) {
+            return reject(new Error('init() failed with code ' + ret));
+          }
+          classifier = {
+            getProjectInfo: () => convertToOrdinary(Module.get_project(), Module.emcc_classification_project_t.prototype),
+            getProperties:  () => convertToOrdinary(Module.get_properties(), Module.emcc_classification_properties_t.prototype),
+            classify: (data) => runClassifier(data)
+          };
+          classifierReady = true;
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      };
+    });
+  }
+
+  function convertToOrdinary(emboundObj, prototype){
+    const out = {};
+    for (const key of Object.getOwnPropertyNames(prototype)) {
+      const desc = Object.getOwnPropertyDescriptor(prototype, key);
+      if (desc && typeof desc.get === 'function') out[key] = emboundObj[key];
+    }
+    return out;
+  }
+
+  function arrayToHeap(data){
+    const typed = new Float32Array(data);
+    const numBytes = typed.length * typed.BYTES_PER_ELEMENT;
+    const ptr = Module._malloc(numBytes);
+    const heapBytes = new Uint8Array(Module.HEAPU8.buffer, ptr, numBytes);
+    heapBytes.set(new Uint8Array(typed.buffer));
+    return { ptr, buffer: heapBytes };
+  }
+
+  function runClassifier(data){
+    const obj = arrayToHeap(data);
+    const ret = Module.run_classifier(obj.buffer.byteOffset, data.length, false);
+    Module._free(obj.ptr);
+    if (ret.result !== 0) throw new Error('Classification failed (code ' + ret.result + ')');
+
+    const result = { anomaly: ret.anomaly, results: [] };
+    for (let i = 0; i < ret.size(); i++) {
+      const c = ret.get(i);
+      result.results.push({ label: c.label, value: c.value });
+      c.delete();
+    }
+    ret.delete();
+    return result;
+  }
+
+  // ---------------------------------------------------------------------
+  // Sliding buffer of accelerometer samples (X, Y, Z interleaved)
+  // ---------------------------------------------------------------------
+  let buffer = [];       // flat array, interleaved X,Y,Z
+  let maxSamples = 0;    // number of (x,y,z) triplets to retain
+
+  function pushSample(x, y, z){
+    buffer.push(x, y, z);
+    const overflow = buffer.length - maxSamples * axisCount;
+    if (overflow > 0) buffer.splice(0, overflow);
+
+    // history for waveform drawing
+    history.push({ x, y, z, t: performance.now() });
+    const cutoff = performance.now() - CANVAS_HISTORY_SEC * 1000;
+    while (history.length && history[0].t < cutoff) history.shift();
+
+    valX.textContent = x.toFixed(2);
+    valY.textContent = y.toFixed(2);
+    valZ.textContent = z.toFixed(2);
+  }
+
+  // ---------------------------------------------------------------------
+  // Waveform canvas (60fps)
+  // ---------------------------------------------------------------------
+  let history = [];
+
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  function drawWaveform(){
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 6; i++){
+      const gx = (w / 6) * i;
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+
+    if (history.length < 2) {
+      requestAnimationFrame(drawWaveform);
+      return;
+    }
+
+    const now = performance.now();
+    const span = CANVAS_HISTORY_SEC * 1000;
+    const scale = h / 2 / 12;   // ~ +/-12 m/s^2 range maps to half-height
+
+    const series = [
+      { key: 'x', color: 'var(--accent-x)', resolved: '#5ee0ff' },
+      { key: 'y', color: 'var(--accent-y)', resolved: '#b18bff' },
+      { key: 'z', color: 'var(--accent-z)', resolved: '#ff8fd6' },
+    ];
+
+    series.forEach(s => {
+      ctx.beginPath();
+      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = s.resolved;
+      ctx.shadowColor = s.resolved;
+      ctx.shadowBlur = 6;
+
+      history.forEach((pt, idx) => {
+        const age = now - pt.t;
+        const px = w - (age / span) * w;
+        const py = h/2 - pt[s.key] * scale;
+        if (idx === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    });
+
+    requestAnimationFrame(drawWaveform);
+  }
+
+  // ---------------------------------------------------------------------
+  // Sensor pipeline: 3-tier fallback
+  // ---------------------------------------------------------------------
+  // Tier 3 high-pass filter state (per-axis gravity estimate)
+  const gravity = { x: 0, y: 0, z: 9.81 };
+  let activeMode = null; // 'generic' | 'hwmotion' | 'swfilter'
+
+  function applyHighPassFilter(ax, ay, az){
+    gravity.x = HP_FILTER_ALPHA * gravity.x + (1 - HP_FILTER_ALPHA) * ax;
+    gravity.y = HP_FILTER_ALPHA * gravity.y + (1 - HP_FILTER_ALPHA) * ay;
+    gravity.z = HP_FILTER_ALPHA * gravity.z + (1 - HP_FILTER_ALPHA) * az;
+    return {
+      x: ax - gravity.x,
+      y: ay - gravity.y,
+      z: az - gravity.z
+    };
+  }
+
+  // latest raw reading (filled by whichever tier is active), sampled on a fixed timer
+  let latest = { x: 0, y: 0, z: 0 };
+  let sensorRunning = false;
+
+  function setMode(mode){
+    activeMode = mode;
+    if (mode === 'generic') setActiveBadge(badgeGeneric);
+    else if (mode === 'hwmotion') setActiveBadge(badgeHw);
+    else if (mode === 'swfilter') setActiveBadge(badgeSw);
+  }
+
+  async function startSensors(){
+    // Request iOS motion permission if required
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      try {
+        const perm = await DeviceMotionEvent.requestPermission();
+        if (perm !== 'granted') {
+          log('Motion permission denied', 'err');
+          return false;
+        }
+      } catch (e) {
+        log('Permission request failed: ' + e.message, 'err');
+      }
+    }
+
+    // Tier 1: W3C Generic Sensor API (LinearAccelerationSensor)
+    if ('LinearAccelerationSensor' in window) {
+      try {
+        const sensor = new LinearAccelerationSensor({ frequency: HZ });
+        sensor.addEventListener('reading', () => {
+          latest = { x: sensor.x, y: sensor.y, z: sensor.z };
+        });
+        sensor.addEventListener('error', (e) => {
+          log('LinearAccelerationSensor error: ' + e.error.name, 'err');
+        });
+        sensor.start();
+        setMode('generic');
+        log('Sensor tier 1: LinearAccelerationSensor active', 'ok');
+        return true;
+      } catch (e) {
+        log('Tier 1 unavailable: ' + e.message);
+      }
+    }
+
+    // Tier 2 & 3: DeviceMotionEvent
+    if (typeof window.DeviceMotionEvent !== 'undefined') {
+      let gotHwAcceleration = false;
+
+      window.addEventListener('devicemotion', (event) => {
+        if (event.acceleration && event.acceleration.x !== null && event.acceleration.x !== undefined) {
+          // Tier 2: hardware-provided linear acceleration (gravity already removed)
+          gotHwAcceleration = true;
+          latest = {
+            x: event.acceleration.x || 0,
+            y: event.acceleration.y || 0,
+            z: event.acceleration.z || 0
+          };
+          if (activeMode !== 'hwmotion') setMode('hwmotion');
+        } else if (event.accelerationIncludingGravity) {
+          // Tier 3: software high-pass filter to remove gravity
+          if (gotHwAcceleration) return; // tier 2 already active, ignore
+          const g = event.accelerationIncludingGravity;
+          const filtered = applyHighPassFilter(g.x || 0, g.y || 0, g.z || 0);
+          latest = filtered;
+          if (activeMode !== 'swfilter') setMode('swfilter');
+        }
+      });
+
+      setMode('hwmotion'); // optimistic; will downgrade to swfilter if no event.acceleration arrives
+      log('Sensor tier 2/3: DeviceMotionEvent listener attached', 'ok');
+      return true;
+    }
+
+    log('No motion sensors available on this device', 'err');
+    return false;
+  }
+
+  // Fixed-rate sampling loop (62.5 Hz)
+  let sampleTimer = null;
+  function startSampling(){
+    if (sampleTimer) return;
+    sampleTimer = setInterval(() => {
+      pushSample(latest.x, latest.y, latest.z);
+      runInferenceIfReady();
+    }, SAMPLE_INTERVAL_MS);
+  }
+
+  // ---------------------------------------------------------------------
+  // Inference loop
+  // ---------------------------------------------------------------------
+  let lastInferenceAt = 0;
+  const INFERENCE_INTERVAL_MS = 250; // throttle UI update rate
+
+  function runInferenceIfReady(){
+    if (!classifierReady) return;
+    if (buffer.length < windowSize) return;
+
+    const now = performance.now();
+    if (now - lastInferenceAt < INFERENCE_INTERVAL_MS) return;
+    lastInferenceAt = now;
+
+    const features = buffer.slice(buffer.length - windowSize);
+
+    const t0 = performance.now();
+    try {
+      const result = classifier.classify(features);
+      const t1 = performance.now();
+      infTime.textContent = (t1 - t0).toFixed(1) + ' ms';
+      renderResults(result);
+    } catch (e) {
+      log('Inference error: ' + e.message, 'err');
+    }
+  }
+
+  function renderResults(result){
+    let topLabel = null, topVal = -1;
+
+    result.results.forEach(r => {
+      const row = document.querySelector(`.prob-row[data-cls="${(r.label || '').toLowerCase()}"]`);
+      const pct = Math.round(r.value * 100);
+      if (row) {
+        row.querySelector('.prob-fill').style.width = pct + '%';
+        row.querySelector('.pct').textContent = pct + '%';
+        row.classList.remove('top');
+      }
+      if (r.value > topVal) { topVal = r.value; topLabel = r.label; }
+    });
+
+    const topRow = document.querySelector(`.prob-row[data-cls="${(topLabel || '').toLowerCase()}"]`);
+    if (topRow) topRow.classList.add('top');
+
+    predictGesture.textContent = topLabel ? topLabel.charAt(0).toUpperCase() + topLabel.slice(1) : '—';
+    predictConf.textContent = 'confidence ' + Math.round(topVal * 100) + '%';
+    predictBanner.classList.add('live');
+  }
+
+  // ---------------------------------------------------------------------
+  // Boot
+  // ---------------------------------------------------------------------
+  async function boot(){
+    resizeCanvas();
+    drawWaveform();
+
+    try {
+      await initClassifier();
+      const info = classifier.getProjectInfo();
+      const props = classifier.getProperties();
+
+      projTitle.textContent = info.name || 'Motion Gesture Classifier';
+      projSub.textContent = (info.owner ? info.owner + ' · ' : '') + 'v' + info.deploy_version;
+      projTag.innerHTML = '<b>' + (info.name || 'Model') + '</b> · deploy v' + info.deploy_version;
+
+      windowSize = props.input_features_count;
+      axisCount = 3;
+      maxSamples = Math.floor(windowSize / axisCount);
+
+      rateReadout.textContent = '62.5 Hz · buffer ' + maxSamples + ' samples';
+      log('Model loaded — expecting ' + windowSize + ' features (' + maxSamples + ' samples x ' + axisCount + ' axes)', 'ok');
+
+      startBtn.disabled = false;
+      startBtn.innerHTML = '<span class="pulse"></span>Start Sensors';
+    } catch (e) {
+      projSub.textContent = 'Model failed to load';
+      log('Classifier init failed: ' + e.message, 'err');
+    }
+  }
+
+  startBtn.addEventListener('click', async () => {
+    startBtn.disabled = true;
+    startBtn.textContent = '';
+    const pulse = document.createElement('span');
+    pulse.className = 'pulse';
+    startBtn.appendChild(pulse);
+    startBtn.appendChild(document.createTextNode('Starting…'));
+
+    const ok = await startSensors();
+
+    startBtn.innerHTML = '<span class="pulse"></span>';
+    startBtn.appendChild(document.createTextNode(ok ? 'Sensors Live' : 'Retry Start'));
+    startBtn.disabled = false;
+    if (ok) {
+      startBtn.classList.add('live');
+      startSampling();
+    }
+  });
+
+  startBtn.disabled = true;
+  startBtn.textContent = 'Loading model…';
+  boot();
+
+})();
+</script>
+</body>
+</html>
