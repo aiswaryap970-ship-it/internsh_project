@@ -34,6 +34,3 @@ A project demonstrating concepts related to memory management.
 
 The portfolio is deployed using Firebase Hosting.
 
-## Author
-
-Aishwarya
