@@ -20,5 +20,5 @@ A personal portfolio website showcasing my projects, skills, and experience.
 
 ## About Me
 
-I am a Computer Science and Engineering student interested in software development, machine learning, networking, and embedded systems.
+I am a Computer Science and Engineering student exploring different areas of technology through academic projects, internships, and hands-on learning.
 
